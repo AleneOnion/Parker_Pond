@@ -62,6 +62,9 @@ print(ggplot(birds_all, aes(x = date_col, y = time_col, fill=Count)) +
     title = "Number of total bird calls: Summer 2025 - Summer 2026"
   )+
   theme(axis.title.x = element_blank()))
+#save as image
+ggsave("Outputs/all_calls.jpg",width = 8, height = 6, units = "in", dpi = 300)
+
 ```
 
 ```{r owls}
@@ -84,8 +87,11 @@ print(ggplot(birds_winter, aes(x = date_col, y = time_col, fill=Count)) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b") +
   labs(
     y = "Time of Day",
-    title = "Number of total bird calls: Summer 2025 - Summer 2026"
+    title = "Number of owl calls: Summer 2025 - Summer 2026"
   )+
   theme(axis.title.x = element_blank()))
+#save as image
+ggsave("Outputs/owl_calls.jpg",width = 8, height = 6, units = "in", dpi = 300)
+
 ```
 
