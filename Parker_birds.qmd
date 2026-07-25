@@ -1,0 +1,91 @@
+---
+title: "Parker_birds"
+author: "Alene Onion"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: html
+editor: visual
+---
+
+## Parker Birds
+
+Interpreting data collected by the haiku box installed at Tuxedo Rock: [Parker_haikubox](https://birds.haikubox.com/listen/64E8334476B0)
+
+```{r reading_in_data}
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+
+#read in data files and merge together
+birdfiles<-list.files("data")
+n<-length(birdfiles)
+birds<-read_excel(paste("data/",birdfiles[1],sep=""))
+for(i in 2:n){
+  temp<-read_excel(paste("data/",birdfiles[i],sep=""))
+  birds<-merge(birds, temp,all=TRUE)
+  rm(temp)
+}
+rm(list=setdiff(ls(), c("birds")))
+
+#reformat data
+birds<-birds %>% 
+  mutate(`Local Time`=substr(`Local Time`,12,19),
+         datetime=ymd_hms(paste(`Local Date`, `Local Time`))) %>% 
+  filter(!is.na(datetime)) %>% 
+  select(Species,`Scientific Name`,datetime,Count) %>% 
+  mutate(
+    date_col = as.Date(datetime),
+    time_col = as.numeric(format(datetime, "%H")) # or floor time to desired intervals
+  )
+
+```
+
+## Annual Plots
+
+```{r all_birds}
+#aggregate data by hour for heat map
+birds_all<-birds %>% 
+  group_by(date_col,time_col) %>% 
+  summarise(Count=sum(Count)) %>% 
+  ungroup() %>% 
+  complete(date_col = seq(min(date_col), max(date_col), by = "1 day")) %>% 
+  group_by(date_col) %>% 
+    complete(time_col = 0:23) %>%
+  ungroup() %>% 
+  replace(is.na(.), 0)
+
+print(ggplot(birds_all, aes(x = date_col, y = time_col, fill=Count)) +
+  geom_raster(interpolate = TRUE) +   
+  scale_fill_viridis_c(option = "magma", name = "# Calls") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+  labs(
+    y = "Time of Day",
+    title = "Number of total bird calls: Summer 2025 - Summer 2026"
+  )+
+  theme(axis.title.x = element_blank()))
+```
+
+```{r owls}
+#aggregate data by hour for heat map
+birds_winter<-birds %>% 
+  filter(grepl("Owl",Species)) %>% 
+  group_by(date_col,time_col) %>% 
+  summarise(Count=sum(Count)) %>% 
+  ungroup() %>% 
+  complete(date_col = seq(min(date_col), max(date_col), by = "1 day")) %>% 
+  group_by(date_col) %>% 
+    complete(time_col = 0:23) %>%
+  ungroup() %>% 
+  replace(is.na(.), 0)
+  
+
+print(ggplot(birds_winter, aes(x = date_col, y = time_col, fill=Count)) +
+  geom_raster(interpolate = TRUE) +   
+  scale_fill_viridis_c(option = "magma", name = "# Calls") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+  labs(
+    y = "Time of Day",
+    title = "Number of total bird calls: Summer 2025 - Summer 2026"
+  )+
+  theme(axis.title.x = element_blank()))
+```
+
